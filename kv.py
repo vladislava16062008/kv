@@ -13,6 +13,16 @@ import scipy
 from scipy import signal as sig
 from scipy.fft import fft, fftfreq
 import matplotlib.pyplot as plt
+def chunk(data, need_chanel,count_chanel=6, fs=250, ):   #жоско распределяем по каналам если норм табличка
+    sets_new = []
+    frames = []
+    x = (pd.DataFrame(np.array(data).T[:][0:(fs*count_chanel)]).T)
+    for i in range(0,fs*count_chanel,fs):
+        sets_new.append(np.array(data.iloc[:, i:i+fs]))
+    for j in need_chanel:
+      frames.append(pd.DataFrame(sets_new[j].T))
+    new_data = pd.concat(frames,ignore_index = True).T
+    return new_data
 
 def read(n):     #чтение файлов
     m=[]
