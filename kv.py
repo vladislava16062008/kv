@@ -50,6 +50,13 @@ def butter_bandpass(data,lowcut, highcut, fs = 250, order=5):   #фильтр б
   b, a = sig.butter(order, [low, high], btype = 'band')
   y = sig.lfilter(b, a, data)
   return y
+def filt_kor(s):
+    sos = sig.butter(8,[1,127],btype='bandpass',fs=256,output='sos')
+    s = sig.sosfiltfilt(sos,s)
+    s = sig.decimate(s,4)
+    s = np.array(s)
+    s = (s - s.min()) / (np.max(s) - np.min(s)) - 0.5
+    return s
 
 def average_plt(data,ch = 8,len_ep = 1,fs = 250):  #массив с нужными эпохами
    epo_len =  len_ep*fs
