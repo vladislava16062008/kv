@@ -73,3 +73,18 @@ def chastots(d,Fs = 250,save = False):
      plt.show()
      if save:
       return frq
+def pick(data,save = True):
+    ans = 0
+    i = 1
+    lines = []
+    while i < len(data)-10:
+        chunk = data[i:i+10]
+        if max(chunk)-min(chunk) > 1.5 and chunk.argmax() < chunk.argmin():
+            lines.append(i+chunk.argmax())
+            i += 25
+        i += 1
+    if save:
+        return (lines)
+    else:
+        return(len(lines))
+
