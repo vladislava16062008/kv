@@ -79,7 +79,7 @@ def pick(data,save = True):
     lines = []
     while i < len(data)-10:
         chunk = data[i:i+10]
-        if max(chunk)-min(chunk) > 1.5 and chunk.argmax() < chunk.argmin():
+        if max(chunk)-min(chunk) > 0.3 and chunk.argmax() < chunk.argmin():
             lines.append(i+chunk.argmax())
             i += 25
         i += 1
@@ -87,4 +87,20 @@ def pick(data,save = True):
         return (lines)
     else:
         return(len(lines))
+def plt_pick(d):
+    x, y = [],[i for i in range(len(d))]
+    k = d
+    l = pick(d)
+    m = y
+    y = []
+    for i in range(len(l)):
+        x.append(k[l[i]])
+        y.append(m[l[i]])
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.plot(k)
+    for i in range(len(y)):
+    
+        ax.scatter(y[i],x[i],c='#2ca02c')
+    plt.show()   #визуализация зубцов 
 
