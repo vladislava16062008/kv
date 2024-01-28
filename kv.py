@@ -58,16 +58,18 @@ def filt_kor(s):
     s = (s - s.min()) / (np.max(s) - np.min(s)) - 0.5
     return s
 
-def average_plt(data,ch = 8,len_ep = 1,fs = 250):  #массив с нужными эпохами
-   epo_len =  len_ep*fs
-   T = np.zeros((epo_len, ch))
-   for t in range(len(data)):
-       T += data[t:t+epo_len]
+def chastots(d,Fs = 250,save = False):
+     n = len(d)
+     k = np.arange(n)
+     T = n/Fs
+     frq = k/T # two sides frequency range
+     frq = frq[:len(frq)//2] # one side frequency range
 
-   T = T / len(data)
-
-   handle = plt.plot(T)
-   plt.legend(handles=handle, labels=['Cz', 'Pz', 'PO7', 'PO8', 'O1', 'O2'], loc=1)
-   plt.ylabel('mV')
-   plt.xlabel('ms')
-   plt.show()
+     Y = np.fft.fft(d)/n 
+     Y = Y[:n//2]
+     plt.plot(frq,abs(Y)) 
+     plt.xlabel('Freq (Hz)')
+     plt.ylabel('|Y(freq)|')
+     plt.show()
+     if save:
+      return frq
