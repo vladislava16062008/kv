@@ -104,3 +104,39 @@ def plt_pick(d):
         ax.scatter(y[i],x[i],c='#2ca02c')
     plt.show()   #визуализация зубцов 
 
+import os
+
+def loadFileFromWebDav("webdav.yandex.ru", filepath, filename, login, password):
+  if os.path.isfile(filename):
+    return    
+
+  netrc = os.environ['HOME'] + "/.netrc"
+
+  if not os.path.isfile(netrc): #Check if .netrc file for WebDav access exists
+    #!rm $netrc
+    netrcText = "machine " + site + " login " + login + " password " + password
+    !echo $netrcText > $netrc
+    !chmod 600 $netrc
+    !cat $netrc
+
+  result = !cadaver --version #Check if WebDav console client cadaver is installed
+  if "command not found" in result: 
+    !sudo apt-get install cadaver
+
+  result = !cadaver --version
+  if not ("command not found" in result): #Create file to get the file from WebDav 
+    #!rm .cadaverrc
+    cadaverrc = "cd " + filepath + "\r\n"
+    cadaverrc += "get " + filename + "\r\n"
+    cadaverrc += "exit\r\n"
+
+    file1 = open("cadaverrc","w") 
+    file1.write(cadaverrc)
+    file1.close() 
+    !cat "cadaverrc"
+
+    webdavurl = "https://" + site 
+    !cadaver -r cadaverrc $webdavurl       
+
+    if ".zip" in filename: #Unpack file if it was compressed by zip
+      !unzip $filename
