@@ -112,20 +112,19 @@ def loadFileFromWebDav("webdav.yandex.ru", filepath, filename, login, password):
 
   netrc = os.environ['HOME'] + "/.netrc"
 
-  if not os.path.isfile(netrc): #Check if .netrc file for WebDav access exists
+  if not os.path.isfile(netrc): #проверяем че то
     #!rm $netrc
     netrcText = "machine " + site + " login " + login + " password " + password
     !echo $netrcText > $netrc
     !chmod 600 $netrc
     !cat $netrc
 
-  result = !cadaver --version #Check if WebDav console client cadaver is installed
+  result = !cadaver --version
   if "command not found" in result: 
     !sudo apt-get install cadaver
 
   result = !cadaver --version
-  if not ("command not found" in result): #Create file to get the file from WebDav 
-    #!rm .cadaverrc
+  if not ("command not found" in result):
     cadaverrc = "cd " + filepath + "\r\n"
     cadaverrc += "get " + filename + "\r\n"
     cadaverrc += "exit\r\n"
@@ -139,4 +138,4 @@ def loadFileFromWebDav("webdav.yandex.ru", filepath, filename, login, password):
     !cadaver -r cadaverrc $webdavurl       
 
     if ".zip" in filename: #Unpack file if it was compressed by zip
-      !unzip $filename
+      !unzip $filename #распаковка чееек
