@@ -13,18 +13,8 @@ import scipy
 from scipy import signal as sig
 from scipy.fft import fft, fftfreq
 import matplotlib.pyplot as plt
-def chunk(data, need_chanel,count_chanel=6, fs=250, ):   #жоско распределяем по каналам если норм табличка
-    sets_new = []
-    frames = []
-    x = (pd.DataFrame(np.array(data).T[:][0:(fs*count_chanel)]).T)
-    for i in range(0,fs*count_chanel,fs):
-        sets_new.append(np.array(data.iloc[:, i:i+fs]))
-    for j in need_chanel:
-      frames.append(pd.DataFrame(sets_new[j].T))
-    new_data = pd.concat(frames,ignore_index = True).T
-    return new_data
 
-def read(n):     #чтение файлов
+def read_dat(n):     #чтение файлов
     m=[]
     t=[]
     with open (n) as nt:
@@ -35,30 +25,14 @@ def read(n):     #чтение файлов
             t.append(k)
     return pd.DataFrame(m),pd.DataFrame(t)
 
-def f_spectrum(data,fre = 250):
-  fy=fft(data)  #преобразование фурье
-  step = 1.0 / fre
-  sz = data.size
-  fx = fftfreq( sz, step)[0:sz//2]
-  fy_normed = 2.0/sz * np.abs(fy[0:sz//2])
-  return fx, fy_normed #частоты, амплитуды
-
-def butter_bandpass(data,lowcut, highcut, fs = 250, order=5):   #фильтр баттерворда
+def butter_bandpass(data,lowcut, highcut, fs = 256, order=5):   #фильтр баттерворда
   nyq = 0.5 * fs
   low = lowcut / nyq
   high = highcut / nyq
   b, a = sig.butter(order, [low, high], btype = 'band')
   y = sig.lfilter(b, a, data)
   return y
-def filt_kor(s):
-    sos = sig.butter(8,[1,127],btype='bandpass',fs=256,output='sos')
-    s = sig.sosfiltfilt(sos,s)
-    s = sig.decimate(s,4)
-    s = np.array(s)
-    s = (s - s.min()) / (np.max(s) - np.min(s)) - 0.5
-    return s
-
-def chastots(d,Fs = 250,save = False):
+def chastots(d,Fs = 256,save = False):
      n = len(d)
      k = np.arange(n)
      T = n/Fs
@@ -73,69 +47,127 @@ def chastots(d,Fs = 250,save = False):
      plt.show()
      if save:
       return frq
-def pick(data,save = True):
-    ans = 0
-    i = 1
-    lines = []
-    while i < len(data)-10:
-        chunk = data[i:i+10]
-        if max(chunk)-min(chunk) > 0.3 and chunk.argmax() < chunk.argmin():
-            lines.append(i+chunk.argmax())
-            i += 25
-        i += 1
-    if save:
-        return (lines)
-    else:
-        return(len(lines))
-def plt_pick(d):
-    x, y = [],[i for i in range(len(d))]
-    k = d
-    l = pick(d)
-    m = y
-    y = []
-    for i in range(len(l)):
-        x.append(k[l[i]])
-        y.append(m[l[i]])
-    fig = plt.figure()
-    ax = fig.gca()
-    ax.plot(k)
-    for i in range(len(y)):
+
+def cut(data,ch,len_epoch=256):
+    eegg = []
+    for j in range(len(ch)):
+        eeg = []
+        for i in range(0,len(data),len_epoch):
+            eeg.append(np.array(data[ch[j]][i:i+len_epoch]))
+        eegg = pd.concat([pd.DataFrame(eegg).T,pd.DataFrame(eeg).T],ignore_index = True).T
+    return eegg
+def inf(a):
+    res = []
+    mx = max(a)
+    mn = min(a)
+    mx_time = np.where(a == mx)[0][0]
+    mn_time = np.where(a == mn)[0][0]
+    res.append(mx_time)
+    res.append(max(a))
+    res.append(max(a) - min(a))
+    res.append(gs(a))
+    res.append(bs(a))
+    #res.append(mx_time - mn_time)
+    #res.append(max(a[0::]))
     
-        ax.scatter(y[i],x[i],c='#2ca02c')
-    plt.show()   #визуализация зубцов 
+    return res
+def butter_bandpass(data,lowcut, highcut, fs = 250, order=5):   #фильтр баттерворда
+  nyq = 0.5 * fs
+  low = lowcut / nyq
+  high = highcut / nyq
+  b, a = sig.butter(order, [low, high], btype = 'band')
+  y = sig.lfilter(b, a, data)
+  return y
+def max_razm(data):
+    data = list(data)
+    ans = []
+    data.remove(max(data))
+    ans.append(max(data))
+    data.remove(max(data))
+    ans.append(max(data))
+    return ans
+def min_razm(data):
+    data = list(data)
+    ans = min(data)
+    data.remove(ans)
+    ans = min(data)
+    return [abs(ans)]
+def var(ch):
+    v = np.std(ch)/np.mean(ch)
+    return [v]
 
-import os
+def max_razm_fft(data):
+    f = np.abs(np.fft.rfft(data))
+    ans = max(f)
+    return [ans]
+def min_razm_fft(data):
+    f = np.abs(np.fft.rfft(data))
+    ans = min(f)
+    return [ans]
 
-def loadFileFromWebDav("webdav.yandex.ru", filepath, filename, login, password):
-  if os.path.isfile(filename):
-    return    
+def max_assim_razm(data):
+    ans = abs(max_razm(data)[0]-min_razm(data)[0])
+    a= []
+    a.append(ans)
+    return a
 
-  netrc = os.environ['HOME'] + "/.netrc"
+def MSR(data):
+    ans = 0
+    ch = data
+    ans += np.sqrt(np.sum(np.array(ch)**2) / len(ch))
+    return [ans]
 
-  if not os.path.isfile(netrc): #проверяем че то
-    #!rm $netrc
-    netrcText = "machine " + site + " login " + login + " password " + password
-    !echo $netrcText > $netrc
-    !chmod 600 $netrc
-    !cat $netrc
-
-  result = !cadaver --version
-  if "command not found" in result: 
-    !sudo apt-get install cadaver
-
-  result = !cadaver --version
-  if not ("command not found" in result):
-    cadaverrc = "cd " + filepath + "\r\n"
-    cadaverrc += "get " + filename + "\r\n"
-    cadaverrc += "exit\r\n"
-
-    file1 = open("cadaverrc","w") 
-    file1.write(cadaverrc)
-    file1.close() 
-    !cat "cadaverrc"
-
-    webdavurl = "https://" + site 
-    !cadaver -r cadaverrc $webdavurl       
-
-    if ".zip" in filename: #Unpack file if it was compressed by zip
-      !unzip $filename #распаковка чееек
+def wawes(ch):
+    SLICE_SIZE = 256
+    ans = []
+    delta = 1 * 64*2//SLICE_SIZE
+    teta = 4* 64*2//SLICE_SIZE
+    alpha = 8 * 64*2//SLICE_SIZE
+    beta = 12 * 64*2//SLICE_SIZE
+    gamma = 30 * 64*2//SLICE_SIZE
+    f = np.abs(np.fft.rfft(ch))
+    ans += [
+            np.sum(f[delta:teta]),
+            np.sum(f[teta:alpha]),
+            np.sum(f[alpha:beta]),
+            np.sum(f[beta:gamma]),
+            np.sum(f[gamma:]),
+        ]
+    return ans
+def mean_z(a):
+    new = []
+    for i in range(0,len(a)-15):
+        new.append(np.mean(a[i:i+15]))
+    return(new)
+def priz_eeg(data,len_epoch = 256,ch =1):   #признаки нужные для ЭЭГ
+    all = []
+    y = []
+    data = np.array(data)
+    for i in range(ch):
+        all.append(max_razm(data[len_epoch*i:len_epoch*i+len_epoch])[1])
+        all.append(min_razm(data[len_epoch*i:len_epoch*i+len_epoch])[0])
+        all.append(max_razm_fft(data[len_epoch*i:len_epoch*i+len_epoch])[0])
+        all.append(wawes(data[len_epoch*i:len_epoch*i+len_epoch])[1])
+        all.append(wawes(data[len_epoch*i:len_epoch*i+len_epoch])[2])
+        all.append(wawes(data[len_epoch*i:len_epoch*i+len_epoch])[3])
+        all.append(wawes(data[len_epoch*i:len_epoch*i+len_epoch])[4])
+        all.append(MSR(data[len_epoch*i:len_epoch*i+len_epoch])[0])
+        all.append(inf(data[len_epoch*i:len_epoch*i+len_epoch])[2])
+        y+=all
+    return y
+def priz_emg(data):   #признаки нужные для эмг
+    all = []
+    y = []
+    all.append(max(data))
+    all.append(np.std(data))
+    all.append(max_razm(data)[1])
+    all.append(max_razm(data)[0])
+    all.append(min_razm(data)[0])
+    b = np.abs(np.diff(data)).sum()/np.array(data).size
+    all.append(b)
+    c = np.sum((np.diff(data[0::][:-1]) * -np.diff(data[0::][1:]))>7000)/data[0::].size
+    all.append(c)
+    all.append(inf(data)[2])
+    all.append(max_razm_fft(data)[0])
+    y+=all
+    return y
