@@ -65,10 +65,7 @@ def inf(a):
     res.append(mx_time)
     res.append(max(a))
     res.append(max(a) - min(a))
-    res.append(gs(a))
-    res.append(bs(a))
-    #res.append(mx_time - mn_time)
-    #res.append(max(a[0::]))
+    
     
     return res
 def butter_bandpass(data,lowcut, highcut, fs = 250, order=5):   #фильтр баттерворда
